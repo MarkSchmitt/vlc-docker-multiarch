@@ -5,15 +5,19 @@ sudo: false
 matrix:
     include:
         - stage: build_docker
+          name: amd64 docker build
+          services:
+            - docker
+          script:
+            - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+            - docker build -f Dockerfile --tag=${DOCKER_REPO}:${TRAVIS_COMMIT}-amd64 .
+            - docker push ${DOCKER_REPO}:${TRAVIS_COMMIT}-amd64
+          on:
+            condition: '"${BUILD_DOCKER}" = 1'
+        - stage: build_docker
           name: arm64v8 docker build
           services:
             - docker
-          before_install:
-            - true
-          install:
-            - true
-          after_success:
-            - true
           script:
             - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
             # travis_wait 60 tells travis to wait for up to 60 minutes - default is 20, which is too short
@@ -26,12 +30,6 @@ matrix:
           name: arm32v7 docker build
           services:
             - docker
-          before_install:
-            - true
-          install:
-            - true
-          after_success:
-            - true
           script:
             - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
             # register binfmt stuff for qemu-static binaries so we can use userland-emulation
@@ -48,12 +46,6 @@ matrix:
           name: arm32v6 docker build # arm32v6 f.e. old raspberry pi (1 and zero)
           services:
             - docker
-          before_install:
-            - true
-          install:
-            - true
-          after_success:
-            - true
           script:
             - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
             # register binfmt stuff for qemu-static binaries so we can use userland-emulation
@@ -71,12 +63,6 @@ matrix:
             - DOCKER_CLI_EXPERIMENTAL=enabled # required for manifest support
           services:
             - docker
-          before_install:
-            - true
-          install:
-            - true
-          after_success:
-            - true
           script:
             - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
             - docker manifest create ${DOCKER_REPO}:${TRAVIS_COMMIT} ${DOCKER_REPO}:${TRAVIS_COMMIT}-amd64 ${DOCKER_REPO}:${TRAVIS_COMMIT}-arm64v8 ${DOCKER_REPO}:${TRAVIS_COMMIT}-arm32v7 ${DOCKER_REPO}:${TRAVIS_COMMIT}-arm32v6
